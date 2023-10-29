@@ -8,12 +8,12 @@ namespace FastDeliveryBE.Controllers
     [Route("api/User")]
     [Authorize]
     [ApiController]
-    public class UserController : ControllerBase
+    public class UsersController : ControllerBase
     {
         UserService UserService;
         private readonly ILogger<DepartmentsController> logger;
 
-        public UserController(UserService UserService
+        public UsersController(UserService UserService
             , ILogger<DepartmentsController> logger)
         {
             this.UserService = UserService;
@@ -55,8 +55,6 @@ namespace FastDeliveryBE.Controllers
                 return BadRequest(result);
             }
         }
-
-
     
 
 
@@ -93,6 +91,43 @@ namespace FastDeliveryBE.Controllers
                 return BadRequest(result);
             }
         }
+
+
+        [HttpGet]
+        [Route("GetByUserName")]
+        public async Task<IActionResult> GetByUserName(string userName)
+        {
+            ActionResponse<UserInfo> result = new Helpers.ActionResponse<UserInfo>();
+            try
+            {
+
+                result.IsDone = true;
+                result.Data = await UserService.GetByUserName(userName);
+                result.ResultMessage = ErrorMessages.ResourceManager.GetString("DataSelected").ToString();
+                result.ResultID = 200;
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                result.IsDone = false;
+                result.Data = null;
+                if (ex is BusinessException)
+                {
+                    result.ResultID = 400;
+                    logger.LogError(ex.Message + " BusinessException : ", ex);
+                    result.ResultMessage = ErrorMessages.ResourceManager.GetString(((BusinessException)ex).Message).ToString();
+                }
+                else
+                {
+                    result.ResultID = 500;
+                    logger.LogError(ex.Message + " Exception : " + ex.ToString(), ex);
+                    result.ResultMessage = ErrorMessages.ResourceManager.GetString("OperationFailed").ToString();
+                }
+                return BadRequest(result);
+            }
+        }
+
+
 
         [HttpPost]
         [Route("ChangeEmployeeDepartment")]

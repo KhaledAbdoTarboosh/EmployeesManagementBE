@@ -9,6 +9,7 @@ namespace FastDeliveryBE.Controllers
 {
     [Route("api/Departments")]
     //[Authorize]
+    [AllowAnonymous]
     [ApiController]
     public class DepartmentsController : ControllerBase
     {
@@ -134,15 +135,15 @@ namespace FastDeliveryBE.Controllers
         /// <param name="id"></param>
         /// <returns></returns>
         [HttpGet]
-        //[Authorize]
-        [Route("GetDepartmentByID")]       
+        [AllowAnonymous]
+        [Route("GetDepartmentByID/{id}")]       
         public async Task<IActionResult> GetDepartmentByID(int id)
         {
             ActionResponse<DepartmentInfo> result = new Helpers.ActionResponse<DepartmentInfo>();
             try
             {
 
-                var claims = HttpContext.User.Claims;
+                //var claims = HttpContext.User.Claims;
 
                 result.IsDone = true;
                 result.Data =await departmentService.GetDepartmentByID(id);
@@ -164,7 +165,7 @@ namespace FastDeliveryBE.Controllers
                 {
                     result.ResultID = 500;
                     logger.LogError(ex.Message + " Exception : " + ex.ToString(), ex);
-                    result.ResultMessage = ErrorMessages.ResourceManager.GetString("OperationFailed");
+                    result.ResultMessage = ex.Message;// ErrorMessages.ResourceManager.GetString("OperationFailed");
                 }
                 return BadRequest(result);
             }

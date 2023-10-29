@@ -1,5 +1,8 @@
-﻿using FastDeliveryBE.Helpers;
+﻿using FastDeliveryBE.DTOs.Auth;
+using FastDeliveryBE.DTOs.Users;
+using FastDeliveryBE.Helpers;
 using FastDeliveryBE.Repositories.JWTTokens;
+using FastDeliveryBE.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 
@@ -14,19 +17,23 @@ namespace FastDeliveryBE.Controllers
         private readonly SignInManager<IdentityUser> signInManager;
         private readonly ILogger<AccountController> logger;
         private readonly ITokenRepository tokenRepo;
+        private readonly UserService userService;
 
         public AccountController(UserManager<IdentityUser> userManager,
             SignInManager<IdentityUser> signInManager,
             ILogger<AccountController> logger,
-        ITokenRepository tokenRepo)
+        ITokenRepository tokenRepo,
+            UserService UserService
+            )
         {
             this.userManager = userManager;
             this.signInManager = signInManager;
             this.logger = logger;
             this.tokenRepo = tokenRepo;
+            this.userService = UserService;
         }
 
-        
+
 
         [HttpPost]
         [Route("AddPassword")]
@@ -54,7 +61,7 @@ namespace FastDeliveryBE.Controllers
                 return Ok(result);
 
 
-               
+
             }
             catch (Exception ex)
             {
@@ -73,16 +80,16 @@ namespace FastDeliveryBE.Controllers
                     result.ResultMessage = ErrorMessages.ResourceManager.GetString("OperationFailed").ToString();
                 }
                 return BadRequest(result);
-            }     
+            }
         }
-        
 
-       
+
+
 
         [HttpPost]
         [Route("ChangePassword")]
-        public async Task<IActionResult> ChangePassword(string userName,string CurrentPassword, string NewPassword)
-        {  
+        public async Task<IActionResult> ChangePassword(string userName, string CurrentPassword, string NewPassword)
+        {
 
             ActionResponse<bool> result = new Helpers.ActionResponse<bool>();
             try
@@ -129,21 +136,21 @@ namespace FastDeliveryBE.Controllers
             }
         }
 
-       
+
 
         [HttpPost]
         [Route("ResetPassword")]
         [AllowAnonymous]
         public async Task<IActionResult> ResetPassword(string email, string token, string NewPassword)
         {
-            
+
 
 
 
             ActionResponse<bool> result = new Helpers.ActionResponse<bool>();
             try
             {
-             
+
 
                 var user = await userManager.FindByEmailAsync(email);
 
@@ -167,9 +174,9 @@ namespace FastDeliveryBE.Controllers
                         result.IsDone = false;
                         result.Data = false;
                     }
-                    
+
                 }
-                    
+
                 result.ResultMessage = ErrorMessages.ResourceManager.GetString("PasswordSet").ToString();
                 result.ResultID = 200;
                 return Ok(result);
@@ -196,9 +203,9 @@ namespace FastDeliveryBE.Controllers
             }
         }
 
-      
 
-       
+
+
 
         [HttpPost]
         [Route("Logout")]
@@ -208,7 +215,7 @@ namespace FastDeliveryBE.Controllers
             return RedirectToAction("index", "home");
         }
 
-       
+
 
         [AcceptVerbs("Get", "Post")]
         [Route("IsEmailInUse")]
@@ -230,7 +237,7 @@ namespace FastDeliveryBE.Controllers
         [HttpPost]
         [Route("Register")]
         [AllowAnonymous]
-        public async Task<IActionResult> Register(string userName,string email  ,string password)
+        public async Task<IActionResult> Register(string userName, string email, string password)
         {
 
             IdentityUser user = new IdentityUser();
@@ -241,7 +248,7 @@ namespace FastDeliveryBE.Controllers
             {
 
 
-                
+
 
                 if (user != null)
                 {
@@ -292,59 +299,58 @@ namespace FastDeliveryBE.Controllers
             }
         }
 
-       
 
-    
+
+
 
         [HttpPost]
         [Route("Login")]
         [AllowAnonymous]
-        public async Task<IActionResult> Login(string email,string password)
+        public async Task<IActionResult> Login(LoginDTO dto)
         {
-            
 
-            ActionResponse<string> result = new Helpers.ActionResponse<string>();
+
+            LoginActionResponse<UserInfo> result = new Helpers.LoginActionResponse<UserInfo>();
             try
             {
 
 
-                var user = await userManager.FindByEmailAsync(email);
+                var user = await userManager.FindByEmailAsync(dto.email);
 
                 if (user != null)
                 {
-                    var checkPasswordResult =await userManager.CheckPasswordAsync(user, password);
+                    var checkPasswordResult = await userManager.CheckPasswordAsync(user, dto.password);
                     if (!(user.EmailConfirmed && checkPasswordResult))
                     {
                         result.ResultID = 400;
                         result.IsDone = false;
-                        result.Data = "";
+                        result.Data = new UserInfo();
                         result.ResultMessage = ErrorMessages.ResourceManager.GetString("WrongUserOrPassword").ToString();
                         return BadRequest(result);
                     }
 
-                   //var res= await signInManager.PasswordSignInAsync(user.UserName, password, true, true);
 
-
-                    //if (res.Succeeded)
-                    //{
 
                     if (checkPasswordResult)
                     {
-                        result.IsDone = true;
-                        result.Data = tokenRepo.CreateJWTToken(user, new List<string>());
+                        UserInfo userDetails =
+
+                        result.Data = await userService.GetByUserName(user.UserName);
+                        result.Token = tokenRepo.CreateJWTToken(user, new List<string>());
                         result.ResultMessage = ErrorMessages.ResourceManager.GetString("LogedIn").ToString();
                         result.ResultID = 200;
                         return Ok(result);
                     }
-                       
-                    //}
-                    //else
-                    //{
-                    //    result.IsDone = false;
-                    //    result.Data = "";
-                    //}         
+
+
+
 
                 }
+
+                result.ResultID = 400;
+                result.IsDone = false;
+                result.Data = new UserInfo();
+                result.ResultMessage = ErrorMessages.ResourceManager.GetString("WrongUserOrPassword").ToString();
                 return BadRequest(result);
 
 
@@ -353,7 +359,7 @@ namespace FastDeliveryBE.Controllers
             catch (Exception ex)
             {
                 result.IsDone = false;
-                result.Data = "";
+                result.Data = new UserInfo();
                 if (ex is BusinessException)
                 {
                     result.ResultID = 400;
@@ -370,6 +376,8 @@ namespace FastDeliveryBE.Controllers
             }
         }
 
-        
+
+
+
     }
 }

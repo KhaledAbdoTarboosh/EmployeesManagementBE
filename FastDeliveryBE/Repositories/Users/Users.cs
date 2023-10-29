@@ -92,7 +92,12 @@ namespace FastDeliveryBE.Repositories.Users
         {
             return await context.Users.FirstOrDefaultAsync(x => x.UserId == userId);
         }
-       
+
+        public async Task<User?> GetByUserName(string username)
+        {
+            return await context.Users.FirstOrDefaultAsync(x => x.UserName == username);
+        }
+
 
         public async Task UpdateUser(User user)
         {

@@ -15,6 +15,7 @@ using Microsoft.AspNetCore.Identity;
 using FastDeliveryBE.Models.Identity;
 using FastDeliveryBE.Repositories.JWT;
 using FastDeliveryBE.Repositories.JWTTokens;
+using FastDeliveryBE.Repositories.Services;
 
 var configuration = new ConfigurationBuilder()
         .AddJsonFile("appsettings.json")
@@ -93,8 +94,8 @@ builder.Services.AddControllers();
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("MyCorsPolicy", builder => builder
-        .AllowAnyOrigin()
+    options.AddPolicy("MyCorsPolicy", policybuilder => policybuilder
+        .WithOrigins( builder.Configuration.GetSection("AllowedOrigins").Get<string[]>())
     .AllowAnyMethod()
     .AllowAnyHeader());
 });
@@ -107,6 +108,8 @@ builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<ITokenRepository, TokenRepository>();
 builder.Services.AddTransient<UserManager<IdentityUser>>();
 builder.Services.AddTransient<SignInManager<IdentityUser>>();
+builder.Services.AddScoped<IServices, Services>();
+builder.Services.AddScoped<ServicesService>();
 //builder.Services.AddTransient<RoleManager<ApplicationRole>, ApplicationRoleManager>();
 //builder.Services.AddTransient<IUserStore<ApplicationUser>, ApplicationUserStore>();
 //builder.Services.AddTransient<IRoleStore<ApplicationRole>, ApplicationRoleStore>();

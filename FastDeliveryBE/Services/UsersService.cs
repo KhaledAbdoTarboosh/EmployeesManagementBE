@@ -26,6 +26,15 @@ namespace FastDeliveryBE.Services
             return User;
         }
 
+        public async Task<UserInfo> GetByUserName(string UserName)
+        {
+            User profile = await profilesRepo.GetByUserName(UserName);
+
+            UserInfo User = this._mapper.Map<UserInfo>(profile);
+
+            return User;
+        }
+
         public async Task AddUser(UserInfo profile)
         {
             User User = this._mapper.Map<User>(profile);

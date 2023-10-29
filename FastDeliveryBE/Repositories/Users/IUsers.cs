@@ -8,7 +8,9 @@ namespace FastDeliveryBE.Repositories.Users
 
         Task ChangeEmployeeDepartment(Guid userId, int departmentID,int subDepartmentID);
 
-        Task<User> GetByUserID(Guid userId);
+        Task<User?> GetByUserID(Guid userId);
+
+        Task<User?> GetByUserName(string username);
 
         Task UpdateUser(User profile);
 
